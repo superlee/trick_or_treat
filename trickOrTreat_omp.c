@@ -72,9 +72,9 @@ int main(int argc, char *argv[])
   if(argc < 3)
   {
     printf("\n"
-           "Trick or Treat problem - (C)2012 Li Chaozheng<lczxster@gmail.com>\n"
+           " Trick or Treat problem - (C)2012 Li Chaozheng<lczxster@gmail.com>\n"
            "\n"
-           "trickOrTreat <n> <i> \n"
+           " trickOrTreat <n> <i> \n"
            " n : the number of threads\n"
            " i : input filename\n");
     return -1;
@@ -92,7 +92,7 @@ int main(int argc, char *argv[])
 
   int i;
 
-	int rank,size;
+  int rank, size;
 
   /// step1 read parameter
   result = (struct path *)malloc(nid * sizeof(struct path));
@@ -129,6 +129,11 @@ int main(int argc, char *argv[])
       fprintf(stderr, "The number of pieces' line is less than the number of home\n ");
       return -1;
     }
+    else if(pieces[i] > PIECES_MAX)
+    {
+      fprintf(stderr, "The pieces of the %d home: %d  is greater than %d\n ", i, pieces[i], PIECES_MAX);
+      return -1;
+    }
 
 #ifdef DEBUG
     printf("pieces[%u] = %d\n", i + 1, pieces[i]);
@@ -153,25 +158,27 @@ int main(int argc, char *argv[])
     rank = omp_get_thread_num();
     size = omp_get_num_threads();
 
-		int left=rank * (home_length/size);
-		int right=(rank+1)*(home_length/size)>home_length?home_length:(rank+1)*(home_length/size);
+    int slice = (home_length + size - 1) / size;
+    int left = rank * slice;
+    int right = (rank + 1) * slice > home_length ? home_length : (rank + 1) * slice;
+    //	printf("Hello world! I'm %d of %d, left=%d and right=%d\n", rank, size, left, right);
     result[rank] = search_path(left, right, pieces, home_length, upper_bound);
   }
 
   int start_home;
   int stop_home;
   int total_candy;
-	int tmp_index;
-	
-	for (i = 0, tmp_index=0; i < nid; ++i)
-	{
-    if(result[i].candy>result[tmp_index].candy)
-			tmp_index=i;
-	}
+  int tmp_index;
 
-	start_home=result[tmp_index].start+1;
-	stop_home=result[tmp_index].stop+1;
-	total_candy=result[tmp_index].candy;
+  for(i = 0, tmp_index = 0; i < nid; ++i)
+  {
+    if(result[i].candy > result[tmp_index].candy)
+      tmp_index = i;
+  }
+
+  start_home = result[tmp_index].start + 1;
+  stop_home = result[tmp_index].stop + 1;
+  total_candy = result[tmp_index].candy;
   /// step 3 write the result to the output file
 
   if(start_home < 0)

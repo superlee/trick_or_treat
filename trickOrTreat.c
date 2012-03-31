@@ -69,9 +69,9 @@ int main(int argc, char *argv[])
   if(argc < 2)
   {
     printf("\n"
-           "Trick or Treat problem - (C)2012 Li Chaozheng<lczxster@gmail.com>\n"
+           " Trick or Treat problem - (C)2012 Li Chaozheng<lczxster@gmail.com>\n"
            "\n"
-           "trickOrTreat <i> \n"
+           " trickOrTreat <i> \n"
            " i : input filename\n");
     return -1;
   }
@@ -117,6 +117,11 @@ int main(int argc, char *argv[])
     if(fscanf(inputfp, "%u\n", pieces + i) == EOF)
     {
       fprintf(stderr, "The number of pieces' line is less than the number of home\n ");
+      return -1;
+    }
+    else if(pieces[i] > PIECES_MAX)
+    {
+      fprintf(stderr, "The pieces of the %d home: %d  is greater than %d\n ", i, pieces[i], PIECES_MAX);
       return -1;
     }
 

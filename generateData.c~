@@ -1,0 +1,60 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+int main(int argc, char *argv[])
+{
+  int i;
+  int FFT_LEN;
+  FILE *fp = NULL;
+  int type = 0;
+  float vec[4] = { -3.339, -1.0, 1.0, 3.339};
+  //  float vec[4] = { -0.5, -0.5, 0.5, 0.5};
+  float *data = NULL;
+
+  if(argc < 2)
+  {
+    printf("\n"
+           " Generate data for FFT test - (C) 2010 Li Chaozheng\n"
+           " generateData <l> <f>\n"
+           " l : number of complex points\n"
+           " f : log filename\n\n");
+    return -1;
+  }
+
+  fp = fopen(argv[2], "wb");
+
+  if(NULL == fp)
+  {
+    fprintf(stderr, "source file %s can't be opened!\n", argv[4]);
+    return -1;
+  }
+
+  FFT_LEN = atoi(argv[1]);
+  data = (float *)malloc(FFT_LEN * 2 * sizeof(float));
+
+  if(NULL == data)
+  {
+    fprintf(stderr, "data can't be malloced\n");
+    return -1;
+  }
+
+  for(i = 0; i < FFT_LEN * 2; ++i)
+  {
+    // generate rand number between 0 to 3
+    type = (int)((4 * (float)rand() / (RAND_MAX - 1))) % 4;
+
+    *(data + i) = *(vec + type);
+    // printf ("data[%d]=%lf\n",i,*(data+i));
+  }
+
+  //	size_t  fwrite(const void *ptr,  size_t size,  size_t nmemb, FILE *stream);
+  fwrite(data, sizeof(float) , (size_t)(FFT_LEN * 2) , fp);
+
+  if(NULL != data)
+    free(data);
+
+  fclose(fp);
+
+
+  return 0;
+}

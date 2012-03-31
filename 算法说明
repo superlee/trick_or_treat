@@ -1,3 +1,15 @@
+程序运行命令
+
+1.测试数据生成程序
+ generateData <n> <u> <f>
+ n : The number of home
+ u : The upper bound
+ f : output filename
+2.串行版问题求解程序
+ trickOrTreat <i> 
+ i : input filename
+3.
+
 解决问题的过程类似于蠕虫蠕动
 
 1.初始化，头和尾都设置为左边界，初始化最佳路径，跳转2
