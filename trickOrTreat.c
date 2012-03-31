@@ -4,32 +4,89 @@
 
 #define DEBUG
 
+struct path
+{
+  int start;
+  int stop;
+  int candy;
+};
+
+struct path search_path(unsigned left, unsigned right, const unsigned *pieces, unsigned length, unsigned upper_bound)
+{
+  struct path result;
+  int tail, head;
+  int temp_sum;
+
+  /// initial
+  result.start = -999;
+  result.stop = -999;
+  result.candy = 0;
+
+  temp_sum = 0;
+
+  head = left;
+
+  for(tail = left; tail < right; ++tail)
+  {
+    /// sync tail and head when the pieces after head is greater than upper bound
+    if(tail > head)
+      head = tail;
+
+    /// the candy should decrease when tail move on
+    if(temp_sum != 0)
+      temp_sum -= pieces[tail - 1];
+
+    /// head move on until arrive the end of sequence or exceed upper bound
+    while(head < length
+          && temp_sum + pieces[head] <= upper_bound)
+    {
+      temp_sum += pieces[head];
+      head++;
+    }
+
+    /// compare and then get the best result
+    if(temp_sum > result.candy)
+    {
+      result.start = tail;
+      result.stop = head - 1;///head is the next step
+      result.candy = temp_sum;
+
+    }
+
+    /// current result is the best when head arrive the end of sequence or already get upper bound
+    if(head == length
+        || result.candy == upper_bound)
+    {
+      return result;
+    }
+  }
+
+  return result;
+}
+
 int main(int argc, char *argv[])
 {
-  if(argc < 1)
+  if(argc < 2)
   {
     printf("\n"
-           "Trick or Treat problem - (C) 2012 Li Chaozheng<lczxster@gmail.com>\n"
+           "Trick or Treat problem - (C)2012 Li Chaozheng<lczxster@gmail.com>\n"
            "\n"
-           "trickOrTreat <i> <o>\n"
+           "trickOrTreat <i> \n"
            " i : input filename\n");
     return -1;
   }
 
-  unsigned int home;
-  unsigned int upper_bound;
-  unsigned int pieces[PIECES_MAX];
-  unsigned int i, j;
+  struct path result;
 
-  unsigned int recieve_candy = 0;
-  unsigned int max_candy = 0;
-  unsigned int start_home = 0;
-  unsigned int stop_home = 0;
-  unsigned int find_result = 0;
+  unsigned home_length;
 
+  unsigned upper_bound;
+
+  unsigned pieces[PIECES_MAX];
+
+  int i;
 
   /// step1 read parameter from input file
-  /// open input file
   FILE *inputfp = fopen(argv[1], "r");
 
   if(NULL == inputfp)
@@ -38,26 +95,24 @@ int main(int argc, char *argv[])
     return -1;
   }
 
-  /// read the number of home
-  fscanf(inputfp, "%u\n", &home);
+  fscanf(inputfp, "%u\n", &home_length);
 
-  if(home > HOMES_MAX)
+  if(home_length > HOMES_MAX)
   {
-    fprintf(stderr, "The number of home %u is greater than %u!\n", home, HOMES_MAX);
+    fprintf(stderr, "The number of home %u is greater than %u!\n", home_length, HOMES_MAX);
     return -1;
   }
 
 #ifdef DEBUG
-  printf("home = %d\n", home);
+  printf("home_length = %d\n", home_length);
 #endif
 
-  /// read the number of upper bound
   fscanf(inputfp, "%u\n", &upper_bound);
 #ifdef DEBUG
   printf("upper_bound = %d\n", upper_bound);
 #endif
 
-  for(i = 0; i < home; ++i)
+  for(i = 0; i < home_length; ++i)
   {
     if(fscanf(inputfp, "%u\n", pieces + i) == EOF)
     {
@@ -72,63 +127,23 @@ int main(int argc, char *argv[])
 
   fclose(inputfp);
 
-/// step 2 find the sequences of home
-
-  for(i = 0; i < home && find_result == 0; ++i)
-  {
-    recieve_candy = 0;
-    start_home = i;
-
-    for(j = i; j < home; ++j)
-    {
-      if(pieces[j] == upper_bound)
-      {
-        start_home = j;
-        stop_home = j;
-        max_candy = upper_bound;
-        find_result = 1;
-        break;
-      }
-      else if(pieces[j] > upper_bound)
-      {
-        break;
-      }
-      else if(pieces[j] < upper_bound)
-      {
-        recieve_candy += pieces[j];
-
-        if(recieve_candy > upper_bound)
-        {
-          break;
-        }
-        else if(recieve_candy > max_candy)
-        {
-          stop_home = j;
-          max_candy = recieve_candy;
-
-          if(max_candy == upper_bound)
-          {
-            find_result = 1;
-            break;
-          }
-        }
-
-      }
-    }
-  }
+  /// step 2 find the sequences of home
+  result = search_path(0, home_length, pieces, home_length, upper_bound);
 
   /// home start from 1
-  start_home++;
-  stop_home++;
+  result.start++;
+  result.stop++;
+
   /// step 3 write the result to the output file
 
-  if(max_candy == 0)
+  if(result.start < 0)
   {
     fprintf(stdout, "Don't go here!\n");
-    return 0;
   }
-
-  printf("Start at home %u and go to home %u getting %u pieces of candy \n", start_home, stop_home, max_candy);
+  else
+  {
+    fprintf(stdout, "Start at home %u and go to home %u getting %u pieces of candy \n", result.start, result.stop, result.candy);
+  }
 
   return 0;
 }
