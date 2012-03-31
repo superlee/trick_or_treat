@@ -1,11 +1,13 @@
 程序运行环境：Linux Centos 5.7 x86_64
+
+版本管理：git
 				
 程序编译命令： 
 1.进入代码所在目录
 2.make all
 3.在目录中会生成三个可执行程序:　generateData、trickOrTreat、trickOrTreat_omp
 
-程序运行命令
+程序运行命令：
 
 1.测试数据生成程序
  generateData <n> <u> <f>
