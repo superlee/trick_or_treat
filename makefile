@@ -1,6 +1,6 @@
 CC=gcc
 CFLAGS= -g -fopenmp
-TARGETS= trickOrTreat 
+TARGETS= trickOrTreat trickOrTreat_omp
 
 .PHONY: all clean
 

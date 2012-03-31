@@ -1,4 +1,7 @@
 #include <stdio.h>
+#include <assert.h>
+#include <stdlib.h>
+#include <omp.h>
 #define HOMES_MAX 10000
 #define PIECES_MAX 1000
 
@@ -66,17 +69,18 @@ struct path search_path(unsigned left, unsigned right, const unsigned *pieces, u
 
 int main(int argc, char *argv[])
 {
-  if(argc < 2)
+  if(argc < 3)
   {
     printf("\n"
            "Trick or Treat problem - (C)2012 Li Chaozheng<lczxster@gmail.com>\n"
            "\n"
-           "trickOrTreat <i> \n"
+           "trickOrTreat <n> <i> \n"
+           " n : the number of threads\n"
            " i : input filename\n");
     return -1;
   }
 
-  struct path result;
+  struct path *result;
 
   unsigned home_length;
 
@@ -84,10 +88,16 @@ int main(int argc, char *argv[])
 
   unsigned pieces[PIECES_MAX];
 
+  int nid;
+
   int i;
 
-  /// step1 read parameter from input file
-  FILE *inputfp = fopen(argv[1], "r");
+	int rank,size;
+
+  /// step1 read parameter
+  result = (struct path *)malloc(nid * sizeof(struct path));
+
+  FILE *inputfp = fopen(argv[2], "r");
 
   if(NULL == inputfp)
   {
@@ -127,23 +137,52 @@ int main(int argc, char *argv[])
 
   fclose(inputfp);
 
+  nid = atoi(argv[1]);
+
+  if(nid <= 0 || nid > home_length)
+  {
+    fprintf(stderr, "The number of threads must be greater than 0 and smaller than the length of homes!\n");
+    return -1;
+  }
+
+
   /// step 2 find the sequences of home
-  result = search_path(0, home_length, pieces, home_length, upper_bound);
+  #pragma omp parallel num_threads(nid) private(rank)
 
-  /// home start from 1
-  result.start++;
-  result.stop++;
+  {
+    rank = omp_get_thread_num();
+    size = omp_get_num_threads();
 
+		int left=rank * (home_length/size);
+		int right=(rank+1)*(home_length/size)>home_length?home_length:(rank+1)*(home_length/size);
+    result[rank] = search_path(left, right, pieces, home_length, upper_bound);
+  }
+
+  int start_home;
+  int stop_home;
+  int total_candy;
+	int tmp_index;
+	
+	for (i = 0, tmp_index=0; i < nid; ++i)
+	{
+    if(result[i].candy>result[tmp_index].candy)
+			tmp_index=i;
+	}
+
+	start_home=result[tmp_index].start+1;
+	stop_home=result[tmp_index].stop+1;
+	total_candy=result[tmp_index].candy;
   /// step 3 write the result to the output file
 
-  if(result.start < 0)
+  if(start_home < 0)
   {
     fprintf(stdout, "Don't go here!\n");
   }
   else
   {
-    fprintf(stdout, "Start at home %u and go to home %u getting %u pieces of candy \n", result.start, result.stop, result.candy);
+    fprintf(stdout, "Start at home %d and go to home %d getting %d pieces of candy \n", start_home, stop_home, total_candy);
   }
 
+  free(result);
   return 0;
 }
